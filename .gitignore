@@ -1,0 +1,17 @@
+*
+!.git*
+!.git*/**
+!.travis.yml
+!LICENSE
+!.clang-format
+!*Makefile
+!*.sublime-project
+!*.md
+!ext
+!ext/**
+!src
+!src/**
+!tests
+!tests/**
+!test-data
+!test-data/**

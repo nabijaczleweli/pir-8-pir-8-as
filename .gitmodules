@@ -1,0 +1,4 @@
+[submodule "ext/pir-8-emu"]
+	path = ext/pir-8-emu
+	branch = v2.0.0
+	url = https://github.com/LoungeCPP/pir-8-emu

@@ -1,0 +1,15 @@
+sudo: true
+language: generic
+cache: apt
+
+before_install:
+  - echo "deb https://debian.nabijaczleweli.xyz stable main" | sudo tee /etc/apt/sources.list.d/nabijaczleweli.list > /dev/null
+  - sudo wget -O- https://debian.nabijaczleweli.xyz/nabijaczleweli.gpg.key | sudo apt-key add -
+  - sudo apt update
+
+install:
+  - sudo apt install g++-6 pir-8-emu
+  - CXX=g++-6 CC=gcc-6
+
+script:
+  - make
