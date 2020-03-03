@@ -45,8 +45,11 @@ else
 endif
 
 OBJ := .o
+PIR_8_EXE := .p8b
 ARCH := .a
 AR := ar
+CPP := cpp
+PIR_8_AS := pir-8-as
 CXXAR := -O3 -std=c++14 -pedantic -Wall -Wextra -pipe $(INCCXXAR) $(PIC)
 
 OUTDIR := out/
@@ -54,3 +57,4 @@ BLDDIR := out/build/
 OBJDIR := $(BLDDIR)obj/
 SRCDIR := src/
 HNDDIR := $(SRCDIR)handlers/
+ASMDIR := $(SRCDIR)assemblies/

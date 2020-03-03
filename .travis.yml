@@ -8,8 +8,7 @@ before_install:
   - sudo apt update
 
 install:
-  - sudo apt install g++-6 pir-8-emu
-  - CXX=g++-6 CC=gcc-6
+  - sudo apt install --no-install-{suggest,recommend}s g++-6 pir-8-emu-binutils
 
 script:
   - make
