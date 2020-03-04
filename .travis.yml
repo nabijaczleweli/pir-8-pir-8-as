@@ -11,4 +11,5 @@ install:
   - sudo apt install --no-install-{suggest,recommend}s g++-6 pir-8-emu-binutils
 
 script:
-  - make
+  - grep '^processor' /proc/cpuinfo | wc -l
+  - make -j$(grep '^processor' /proc/cpuinfo | wc -l)

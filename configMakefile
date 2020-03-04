@@ -50,7 +50,7 @@ ARCH := .a
 AR := ar
 CPP := cpp
 PIR_8_AS := pir-8-as
-CXXAR := -O3 -std=c++14 -pedantic -Wall -Wextra -pipe $(INCCXXAR) $(PIC)
+CXXAR := -O3 -std=c++17 -pedantic -Wall -Wextra -pipe $(INCCXXAR) $(PIC)
 
 OUTDIR := out/
 BLDDIR := out/build/
