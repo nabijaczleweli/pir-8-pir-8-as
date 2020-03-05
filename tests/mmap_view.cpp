@@ -22,7 +22,7 @@
 
 
 #include "mmap/mmap_view.hpp"
-#include <cassert>
+#include "assert.hpp"
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -31,13 +31,13 @@
 
 int main() {
 	mmap_view make_mapped("Makefile", std::cerr);
-	assert(((void)"Couldn't map file", make_mapped));
+	assert(make_mapped, "Couldn't map file");
 
 	std::string make_read;
-	assert(((void)"Couldn't read file", std::getline(std::ifstream("Makefile"), make_read, '\0')));
+	assert(std::getline(std::ifstream("Makefile"), make_read, '\0'), "Couldn't read file");
 
-	assert(make_mapped.size() == make_read.size());
-	assert(std::string_view(static_cast<const char *>(make_mapped.data()), make_mapped.size()) == make_read);
+	assert_eq(make_mapped.size(), make_read.size(), "Wrong filesize");
+	assert_eq(std::string_view(static_cast<const char *>(make_mapped.data()), make_mapped.size()), make_read, "Wrong file content");
 
 	std::cout << __FILE__ << ": OK\n";
 }
