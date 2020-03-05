@@ -3,13 +3,16 @@ language: generic
 cache: apt
 
 before_install:
+  # https://askubuntu.com/a/1149383
+  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+  -
   - echo "deb https://debian.nabijaczleweli.xyz stable main" | sudo tee /etc/apt/sources.list.d/nabijaczleweli.list > /dev/null
   - sudo wget -O- https://debian.nabijaczleweli.xyz/nabijaczleweli.gpg.key | sudo apt-key add -
   - sudo apt update
 
 install:
-  - sudo apt install --no-install-{suggest,recommend}s g++-6 pir-8-emu-binutils
+  - sudo apt install --no-install-{suggest,recommend}s g++-9 pir-8-emu-binutils
+  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 60 --slave /usr/bin/g++ g++ /usr/bin/g++-9
 
 script:
-  - grep '^processor' /proc/cpuinfo | wc -l
   - make -j$(grep '^processor' /proc/cpuinfo | wc -l)

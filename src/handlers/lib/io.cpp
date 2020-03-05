@@ -23,7 +23,7 @@
 
 #include "io.hpp"
 #include "mmap/mmap_view.hpp"
-#include <fstream>
+#include <ostream>
 #include <string_view>
 
 
