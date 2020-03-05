@@ -21,27 +21,11 @@
 // DEALINGS IN THE SOFTWARE.
 
 
-#pragma once
+#ifndef _WIN32
 
 
-#include "posix.hpp"
-#include "windows.hpp"
-#include <ostream>
+#define MMAP_VIEW_PLATFORM_DATA  \
+	int raw_file{-1};
 
 
-class mmap_view {
-private:
-	MMAP_VIEW_PLATFORM_DATA
-	std::size_t file_size{};
-	void * file_view{};
-
-public:
-	mmap_view(const char * fname, std::ostream & log);
-	mmap_view(const mmap_view &) = delete;
-	~mmap_view();
-
-	const void * data() const noexcept;
-	std::size_t size() const noexcept;
-
-	operator bool() const noexcept;
-};
+#endif

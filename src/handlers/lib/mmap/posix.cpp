@@ -21,27 +21,54 @@
 // DEALINGS IN THE SOFTWARE.
 
 
-#pragma once
+#ifndef _WIN32
 
 
-#include "posix.hpp"
-#include "windows.hpp"
-#include <ostream>
+#include "mmap_view.hpp"
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 
-class mmap_view {
-private:
-	MMAP_VIEW_PLATFORM_DATA
-	std::size_t file_size{};
-	void * file_view{};
+mmap_view::mmap_view(const char * fname, std::ostream & log) {
+	raw_file = open(fname, O_RDONLY);
+	if(raw_file == -1) {
+		log << "Couldn't open " << fname << ": " << errno << '\n';
+		return;
+	}
 
-public:
-	mmap_view(const char * fname, std::ostream & log);
-	mmap_view(const mmap_view &) = delete;
-	~mmap_view();
+	struct stat file_info;
+	if(fstat(raw_file, &file_info)) {
+		log << "Couldn't get size of " << fname << ": " << errno << '\n';
+		return;
+	}
+	file_size = file_info.st_size;
 
-	const void * data() const noexcept;
-	std::size_t size() const noexcept;
+	if(file_size == 0) {
+		log << "Size of " << fname << " is 0, not mapping further\n";
+		return;
+	}
 
-	operator bool() const noexcept;
-};
+	file_view = mmap(nullptr, file_size, PROT_READ, MAP_PRIVATE, raw_file, 0);
+	if(file_view == MAP_FAILED) {
+		file_view = nullptr;
+		log << "Couldn't map " << fname << ": " << errno << '\n';
+		return;
+	}
+}
+
+mmap_view::~mmap_view() {
+	if(file_view) {
+		munmap(file_view, file_size);
+		file_view = nullptr;
+	}
+
+	if(raw_file != -1) {
+		close(raw_file);
+		raw_file = -1;
+	}
+}
+
+
+#endif
