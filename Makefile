@@ -67,7 +67,7 @@ $(OBJDIR)%$(OBJ) : $(HNDDIR)%.cpp
 
 $(OBJDIR)tests/%$(OBJ) : $(TSTDIR)%.cpp
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXXAR) $(INCAR) -I$(HNDDIR)lib -c -o$@ $^
+	$(CXX) $(CXXAR) $(INCAR) -I$(TSTDIR) -I$(HNDDIR) -c -o$@ $^
 
 $(BLDDIR)% : $(ASMDIR)%.pp
 	@mkdir -p $(dir $@)

@@ -27,9 +27,14 @@
 #include <string_view>
 
 
-io_config load_configured_io(std::ostream & log) {
-	mmap_view vue("owo", log);
-	log << "Mapped owo (" << vue.size() << "B)!\n";
+io_config load_configured_io(const char * filename, std::ostream & log) {
+	mmap_view vue(filename, log);
+	if(!vue) {
+		log << "Couldn't map " << filename << ".\n";
+		return {};
+	}
+
+	log << "Mapped " << filename << " (" << vue.size() << "B)!\n";
 	log << std::string_view(static_cast<const char *>(vue.data()), vue.size()) << '\n';
 
 	return {};

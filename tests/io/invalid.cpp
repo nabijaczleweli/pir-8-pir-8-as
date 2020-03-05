@@ -21,23 +21,14 @@
 // DEALINGS IN THE SOFTWARE.
 
 
-#include "mmap/mmap_view.hpp"
+#include "lib/io.hpp"
 #include "assert.hpp"
-#include <fstream>
 #include <iostream>
-#include <string>
-#include <string_view>
 
 
 int main() {
-	mmap_view make_mapped("Makefile", std::cerr);
-	assert(make_mapped, "Couldn't map file");
+	assert_eq_print(load_configured_io(__FILE__, std::clog), io_config{}, "Somehow not empty",
+	                [](const auto & what, auto & out) { out << '{' << what.size() << " members}"; });
 
-	std::string make_read;
-	assert(std::getline(std::ifstream("Makefile"), make_read, '\0'), "Couldn't read file");
-
-	assert_eq(make_mapped.size(), make_read.size(), "Wrong filesize");
-	assert_eq(std::string_view(static_cast<const char *>(make_mapped.data()), make_mapped.size()), make_read, "Wrong file content");
-
-	std::cout << __FILE__ << ": OK\n";
+	test_ok();
 }

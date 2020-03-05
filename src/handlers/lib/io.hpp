@@ -33,4 +33,4 @@
 using io_config = std::map<std::uint8_t, std::pair<std::string, std::ios_base::openmode>>;
 
 
-io_config load_configured_io(std::ostream & log);
+io_config load_configured_io(const char * filename, std::ostream & log);

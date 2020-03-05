@@ -45,3 +45,20 @@
 			return __LINE__;                                                                                                                                \
 		}                                                                                                                                                 \
 	} while(false)
+
+#define assert_eq_print(lhs, rhs, message, print)                                                                                     \
+	do {                                                                                                                                \
+		const auto assert_eq_lhs = (lhs);                                                                                                 \
+		const auto assert_eq_rhs = (rhs);                                                                                                 \
+		if(!(assert_eq_lhs == assert_eq_rhs)) {                                                                                           \
+			std::cerr << __FILE__ << ':' << __LINE__ << ": assertion failed: " << #lhs << " == " << #rhs << ": " << message << "\n  lhs: "; \
+			print(assert_eq_lhs, std::cerr);                                                                                                \
+			std::cerr << "\n  rhs: ";                                                                                                       \
+			print(assert_eq_rhs, std::cerr);                                                                                                \
+			std::cerr << '\n';                                                                                                              \
+			return __LINE__;                                                                                                                \
+		}                                                                                                                                 \
+	} while(false)
+
+
+#define test_ok() std::cout << __FILE__ << ": OK\n";
