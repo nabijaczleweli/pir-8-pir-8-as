@@ -21,17 +21,23 @@
 // DEALINGS IN THE SOFTWARE.
 
 
-#include "mmap_view.hpp"
+#include "mmap/mmap_view.hpp"
+#include <cassert>
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <string_view>
 
 
-const void * mmap_view::data() const noexcept {
-	return file_view;
-}
+int main() {
+	mmap_view make_mapped("Makefile", std::cerr);
+	assert(((void)"Couldn't map file", make_mapped));
 
-std::size_t mmap_view::size() const noexcept {
-	return file_size;
-}
+	std::string make_read;
+	assert(((void)"Couldn't read file", std::getline(std::ifstream("Makefile"), make_read, '\0')));
 
-mmap_view::operator bool() const noexcept {
-	return file_size;
+	assert(make_mapped.size() == make_read.size());
+	assert(std::string_view(static_cast<const char *>(make_mapped.data()), make_mapped.size()) == make_read);
+
+	std::cout << __FILE__ << ": OK\n";
 }

@@ -27,8 +27,8 @@
 		},
 		{
 			"follow_symlinks": true,
-			"name": "Test data",
-			"path": "test-data"
+			"name": "Tests",
+			"path": "tests"
 		},
 		{
 			"follow_symlinks": true,

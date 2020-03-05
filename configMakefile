@@ -22,11 +22,13 @@
 
 ifeq "$(OS)" "Windows_NT"
 	DLL := .dll
+	EXE := .exe
 	PREDLL :=
 	PIC :=
 	OS_LD_LIBS :=
 else
 	DLL := .so
+	EXE :=
 	PREDLL := lib
 	PIC := -fPIC
 	OS_LD_LIBS :=
@@ -58,3 +60,4 @@ OBJDIR := $(BLDDIR)obj/
 SRCDIR := src/
 HNDDIR := $(SRCDIR)handlers/
 ASMDIR := $(SRCDIR)assemblies/
+TSTDIR := tests/
