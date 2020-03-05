@@ -22,13 +22,23 @@
 
 
 #include "lib/io.hpp"
-#include "assert.hpp"
-#include <iostream>
+#include <ios>
+#include <string>
 
 
-int main() {
-	assert_eq_print(load_configured_io(__FILE__, std::cerr), io_config{}, "Somehow not empty",
-	                [](const auto & what, auto & out) { out << '{' << what.size() << " members}"; });
+using namespace std::literals;
 
-	test_ok();
-}
+
+static const char * const TEST_BUF = R"(
+# comment
+12 r twelfth.in
+13 w thirteenth.out  # Hewwo!
+2  w second.out
+)";
+
+static const io_config TEST_EXPECTED = {{12, {std::ios::in, "twelfth.in"s}},       //
+                                        {13, {std::ios::out, "thirteenth.out"s}},  //
+                                        {2, {std::ios::out, "second.out"s}}};
+
+
+#include "correct.hpp"

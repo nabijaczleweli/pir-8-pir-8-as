@@ -30,7 +30,7 @@
 
 
 int main() {
-	mmap_view make_mapped("Makefile", std::clog);
+	mmap_view make_mapped("Makefile", std::cerr);
 	assert(make_mapped, "Couldn't map file");
 
 	std::string make_read;

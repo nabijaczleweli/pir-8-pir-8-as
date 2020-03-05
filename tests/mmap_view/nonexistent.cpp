@@ -26,7 +26,7 @@
 
 
 int main() {
-	mmap_view make_mapped("not a makefile, оr, indeed, anything at all", std::clog);
+	mmap_view make_mapped("not a makefile, оr, indeed, anything at all", std::cerr);
 	assert(!make_mapped, "Mapped nonexistent file");
 
 	test_ok();

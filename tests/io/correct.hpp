@@ -21,13 +21,20 @@
 // DEALINGS IN THE SOFTWARE.
 
 
-#include "lib/io.hpp"
 #include "assert.hpp"
+#include "lib/io.hpp"
+#include "quickscope_wrapper.hpp"
+#include <cstdio>
+#include <fstream>
 #include <iostream>
 
 
 int main() {
-	assert_eq_print(load_configured_io(__FILE__, std::cerr), io_config{}, "Somehow not empty",
+	const auto temp_path = std::tmpnam(nullptr);
+	quickscope_wrapper temp_path_deleter{[&] { std::remove(temp_path); }};
+	assert(std::ofstream(temp_path) << TEST_BUF, "Test data");
+
+	assert_eq_print(load_configured_io(temp_path, std::cerr), TEST_EXPECTED, "Mismatch",
 	                [](const auto & what, auto & out) { out << '{' << what.size() << " members}"; });
 
 	test_ok();

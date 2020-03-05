@@ -45,7 +45,7 @@ handlers : $(foreach l,$(HANDLER_SOURCES),$(patsubst $(HNDDIR)%.cpp,$(OUTDIR)$(P
 assemblies : $(foreach l,$(ASSEMBLY_SOURCES),$(patsubst $(ASMDIR)%.p8a.pp,$(OUTDIR)%$(PIR_8_EXE),$(l)))
 
 tests : $(foreach l,$(TEST_SOURCES),$(patsubst %.cpp,$(OUTDIR)%$(EXE),$(l)))
-	$(foreach l,$^,$l;)
+	$(foreach l,$^,$l &&) :
 
 
 $(BLDDIR)libhandler$(ARCH) : $(patsubst $(SRCDIR)%.cpp,$(OBJDIR)%$(OBJ),$(HANDLER_LIB_SOURCES))

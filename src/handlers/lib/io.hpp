@@ -30,7 +30,7 @@
 #include <ostream>
 
 
-using io_config = std::map<std::uint8_t, std::pair<std::string, std::ios_base::openmode>>;
+using io_config = std::map<std::uint8_t, std::pair<std::ios::openmode, std::string>>;
 
 
 io_config load_configured_io(const char * filename, std::ostream & log);
