@@ -22,6 +22,7 @@
 
 
 #include "lib/io.hpp"
+#include "lib/mmap/mmap_view.hpp"
 #include <fstream>
 #include <pir-8-emu/port_handler.h>
 
@@ -41,7 +42,14 @@ void * pir_8_emu_init(const unsigned char *, unsigned char) {
 	log.rdbuf()->pubsetbuf(nullptr, 0);
 	log << '\n';
 
-	return new bulk_io_state{load_configured_io("bulk.io", log), std::move(log)};
+	mmap_view input_file{"bulk.io", log};
+	if(!input_file) {
+		log << "Couldn't map bulk.io.\n";
+		return {};
+	}
+	log << "Mapped bulk.io (" << input_file.size() << "B)!\n";
+
+	return new bulk_io_state{load_configured_io(input_file, "bulk.io", log), std::move(log)};
 }
 
 void pir_8_emu_uninit(void * state) {

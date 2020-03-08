@@ -23,18 +23,22 @@
 
 #include "assert.hpp"
 #include "lib/io.hpp"
-#include "quickscope_wrapper.hpp"
-#include <cstdio>
-#include <fstream>
+#include <ios>
 #include <iostream>
 
 
-int main() {
-	const auto temp_path = std::tmpnam(nullptr);
-	quickscope_wrapper temp_path_deleter{[&] { std::remove(temp_path); }};
-	assert(std::ofstream(temp_path) << TEST_BUF, "Test data");
+static const char * const TEST_BUF = R"(
+# comment
+12 r twelfth.in
+12 w twelfth.out  # Hewwo!
+2  w second.out
+)";
 
-	assert_eq_print(load_configured_io(temp_path, std::cerr), TEST_EXPECTED, "Mismatch",
+static const io_config TEST_EXPECTED = {{12, {std::ios::in, "twelfth.in"}}};
+
+
+int main() {
+	assert_eq_print(load_configured_io(TEST_BUF, "test data", std::cerr), TEST_EXPECTED, "Mismatch",
 	                [](const auto & what, auto & out) { out << '{' << what.size() << " members}"; });
 
 	test_ok();

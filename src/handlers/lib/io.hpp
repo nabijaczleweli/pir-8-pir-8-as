@@ -28,9 +28,10 @@
 #include <ios>
 #include <map>
 #include <ostream>
+#include <string_view>
 
 
-using io_config = std::map<std::uint8_t, std::pair<std::ios::openmode, std::string>>;
+using io_config = std::map<std::uint8_t, std::pair<std::ios::openmode, std::string_view>>;
 
 
-io_config load_configured_io(const char * filename, std::ostream & log);
+io_config load_configured_io(std::string_view input, const char * input_name, std::ostream & log);

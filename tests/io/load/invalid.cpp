@@ -22,21 +22,17 @@
 
 
 #include "lib/io.hpp"
-#include <ios>
-#include <string>
+#include "lib/mmap/mmap_view.hpp"
+#include "assert.hpp"
+#include <iostream>
 
 
-using namespace std::literals;
+int main() {
+	mmap_view readme("README.md", std::cerr);
+	assert(readme, "Couldn't map file");
 
+	assert_eq_print(load_configured_io(readme, "README.md", std::cerr), io_config{}, "Somehow not empty",
+	                [](const auto & what, auto & out) { out << '{' << what.size() << " members}"; });
 
-static const char * const TEST_BUF = R"(
-# comment
-12 r twelfth.in
-12 w twelfth.out  # Hewwo!
-2  w second.out
-)";
-
-static const io_config TEST_EXPECTED = {{12, {std::ios::in, "twelfth.in"s}}};
-
-
-#include "correct.hpp"
+	test_ok();
+}

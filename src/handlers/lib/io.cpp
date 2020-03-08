@@ -31,7 +31,7 @@
 
 
 #define WHITESPACE "\x20\x0c\x0a\x0d\x09\x0b"  // https://en.cppreference.com/w/c/string/byte/isspace
-#define FILE_OFFSET(for) (for.data() - static_cast<const char *>(input_file.data()))
+#define FILE_OFFSET(for) (for.data() - input_start)
 
 
 static const char * from_chars_reason(std::errc err) {
@@ -46,15 +46,8 @@ static const char * from_chars_reason(std::errc err) {
 }
 
 
-io_config load_configured_io(const char * filename, std::ostream & log) {
-	mmap_view input_file{filename, log};
-	if(!input_file) {
-		log << "Couldn't map " << filename << ".\n";
-		return {};
-	}
-	log << "Mapped " << filename << " (" << input_file.size() << "B)!\n";
-
-	std::string_view input{static_cast<const char *>(input_file.data()), input_file.size()};
+io_config load_configured_io(std::string_view input, const char * input_name, std::ostream & log) {
+	const auto input_start = input.data();
 	io_config ret{};
 
 	while(!input.empty()) {
@@ -74,11 +67,11 @@ io_config load_configured_io(const char * filename, std::ostream & log) {
 		std::uint8_t io_num{};
 		auto parse_result = std::from_chars(input.data(), input.data() + input.size(), io_num);
 		if(parse_result.ec != std::errc{}) {
-			log << "Couldn't parse " << filename << ':' << FILE_OFFSET(input) << ": " << from_chars_reason(parse_result.ec) << ".\nData left: " << input << '\n';
+			log << "Couldn't parse " << input_name << ':' << FILE_OFFSET(input) << ": " << from_chars_reason(parse_result.ec) << ".\nData left: " << input << '\n';
 			return ret;
 		}
 		if(ret.find(io_num) != ret.end()) {
-			log << filename << ':' << FILE_OFFSET(input) << ": file #" << static_cast<unsigned int>(io_num) << " specified twice."
+			log << input_name << ':' << FILE_OFFSET(input) << ": file #" << static_cast<unsigned int>(io_num) << " specified twice."
 			    << "\nData left: " << input << '\n';
 			return ret;
 		}
@@ -97,7 +90,7 @@ io_config load_configured_io(const char * filename, std::ostream & log) {
 			else if(raw_mode == "w")
 				mode = std::ios::out;
 			else {
-				log << filename << ':' << FILE_OFFSET(raw_mode) << ": invalid open-mode for file #" << static_cast<unsigned int>(io_num) << ": " << raw_mode << '\n';
+				log << input_name << ':' << FILE_OFFSET(raw_mode) << ": invalid open-mode for file #" << static_cast<unsigned int>(io_num) << ": " << raw_mode << '\n';
 				return ret;
 			}
 
@@ -111,8 +104,8 @@ io_config load_configured_io(const char * filename, std::ostream & log) {
 			break;
 
 		if(const auto off = input.find_first_of(WHITESPACE); off != std::string_view::npos) {
-			std::string_view filename(input.data(), off);
-			ret.insert(std::make_pair(io_num, std::make_pair(mode, filename)));
+			std::string_view input_name(input.data(), off);
+			ret.insert(std::make_pair(io_num, std::make_pair(mode, input_name)));
 
 			input.remove_prefix(off);
 		} else

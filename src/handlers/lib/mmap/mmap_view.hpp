@@ -44,4 +44,9 @@ public:
 	std::size_t size() const noexcept;
 
 	operator bool() const noexcept;
+
+	template <class T>
+	operator std::basic_string_view<T>() const noexcept {
+		return {static_cast<const T *>(data()), size()};
+	}
 };

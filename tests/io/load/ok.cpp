@@ -21,13 +21,26 @@
 // DEALINGS IN THE SOFTWARE.
 
 
-#include "lib/io.hpp"
 #include "assert.hpp"
+#include "lib/io.hpp"
+#include <ios>
 #include <iostream>
 
 
+static const char * const TEST_BUF = R"(
+# comment
+12 r twelfth.in
+13 w thirteenth.out  # Hewwo!
+2  w second.out
+)";
+
+static const io_config TEST_EXPECTED = {{12, {std::ios::in, "twelfth.in"}},       //
+                                        {13, {std::ios::out, "thirteenth.out"}},  //
+                                        {2, {std::ios::out, "second.out"}}};
+
+
 int main() {
-	assert_eq_print(load_configured_io(__FILE__, std::cerr), io_config{}, "Somehow not empty",
+	assert_eq_print(load_configured_io(TEST_BUF, "test data", std::cerr), TEST_EXPECTED, "Mismatch",
 	                [](const auto & what, auto & out) { out << '{' << what.size() << " members}"; });
 
 	test_ok();

@@ -37,7 +37,7 @@ int main() {
 	assert(std::getline(std::ifstream("Makefile"), make_read, '\0'), "Couldn't read file");
 
 	assert_eq(make_mapped.size(), make_read.size(), "Wrong filesize");
-	assert_eq(std::string_view(static_cast<const char *>(make_mapped.data()), make_mapped.size()), make_read, "Wrong file content");
+	assert_eq(static_cast<std::string_view>(make_mapped), make_read, "Wrong file content");
 
 	test_ok();
 }
