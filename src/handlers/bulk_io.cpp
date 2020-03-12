@@ -21,6 +21,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 
+#include "lib/display.hpp"
 #include "lib/io.hpp"
 #include "lib/mmap/mmap_view.hpp"
 #include <fstream>
@@ -33,8 +34,9 @@ struct bulk_io_state {
 };
 
 static std::ofstream init_log(const char * func) {
-	std::ofstream log{"bulk_io.log", std::ios::app};
+	std::ofstream log;
 	log.rdbuf()->pubsetbuf(nullptr, 0);
+	log.open("bulk_io.log", std::ios::app);
 	log << '\n' << func << "()\n";
 	return log;
 }
@@ -76,12 +78,48 @@ void * pir_8_emu_init(const unsigned char *, unsigned char) {
 	return new bulk_io_state{std::move(map), std::move(log)};
 }
 
-void pir_8_emu_uninit(void * state) {
-	delete static_cast<bulk_io_state *>(state);
+void pir_8_emu_uninit(void * state_v) {
+	auto state = static_cast<bulk_io_state *>(state_v);
+	state->log << "pir_8_emu_uninit()\n\n";
+
+	delete state;
 }
 
-unsigned char pir_8_emu_handle_read(void *, unsigned char) {
-	return 0;
+unsigned char pir_8_emu_handle_read(void * state_p, unsigned char port) {
+	auto & state = *static_cast<bulk_io_state *>(state_p);
+	state.log << "pir_8_emu_handle_read(" << byte_write{port} << "): ";
+
+	if(auto stream = state.io_map.find(port); stream != state.io_map.end()) {
+		char data{};
+		stream->second.get(data);
+
+		if(stream->second.eof())
+			state.log << "EOF";
+		else if(stream->second.fail())
+			state.log << "failed";
+		else
+			state.log << "got " << maybe_printable_write{data};
+		state.log << "\n\n";
+
+		return data;
+	} else {
+		state.log << "not found\n\n";
+		return 0x00;
+	}
 }
 
-void pir_8_emu_handle_write(void *, unsigned char, unsigned char) {}
+void pir_8_emu_handle_write(void * state_p, unsigned char port, unsigned char byte) {
+	auto & state = *static_cast<bulk_io_state *>(state_p);
+	state.log << "pir_8_emu_handle_write(" << byte_write{port} << ", " << maybe_printable_write{static_cast<char>(byte)} << "): ";
+
+	if(auto stream = state.io_map.find(port); stream != state.io_map.end()) {
+		stream->second.put(byte);
+
+		if(stream->second.bad())
+			state.log << "failed";
+		else
+			state.log << "ok";
+		state.log << "\n\n";
+	} else
+		state.log << "not found\n\n";
+}
