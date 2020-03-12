@@ -2,3 +2,7 @@
 	path = ext/pir-8-emu
 	branch = v2.0.1
 	url = https://github.com/LoungeCPP/pir-8-emu
+[submodule "ext/fmt"]
+	path = ext/fmt
+	branch = 6.1.2
+	url = https://github.com/fmtlib/fmt
