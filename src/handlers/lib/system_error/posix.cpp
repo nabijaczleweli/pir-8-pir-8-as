@@ -26,6 +26,7 @@
 
 #include "system_error.hpp"
 #include <stdio.h>
+#undef _GNU_SOURCE
 #include <string.h>
 
 
