@@ -24,6 +24,7 @@
 #ifdef _WIN32
 
 
+#include "../system_error/system_error.hpp"
 #include "mmap_view.hpp"
 #include <windows.h>
 
@@ -31,13 +32,15 @@
 mmap_view::mmap_view(const char * fname, std::ostream & log) {
 	raw_file = CreateFileA(fname, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 	if(raw_file == INVALID_HANDLE_VALUE) {
-		log << "Couldn't open " << fname << ": 0x" << std::hex << GetLastError() << std::dec << '\n';
+		const auto err = GetLastError();
+		log << "Couldn't open " << fname << ": " << error_write{err} << '\n';
 		return;
 	}
 
 	LARGE_INTEGER file_size_temp;
 	if(!GetFileSizeEx(raw_file, &file_size_temp)) {
-		log << "Couldn't get size of " << fname << ": 0x" << std::hex << GetLastError() << std::dec << '\n';
+		const auto err = GetLastError();
+		log << "Couldn't get size of " << fname << ": " << error_write{err} << '\n';
 		return;
 	}
 	file_size = file_size_temp.QuadPart;
@@ -49,13 +52,15 @@ mmap_view::mmap_view(const char * fname, std::ostream & log) {
 
 	file_mapping = CreateFileMappingA(raw_file, nullptr, PAGE_READONLY, 0, 0, nullptr);
 	if(file_mapping == nullptr) {
-		log << "Couldn't create mapping for " << fname << ": 0x" << std::hex << GetLastError() << std::dec << '\n';
+		const auto err = GetLastError();
+		log << "Couldn't create mapping for " << fname << ": " << error_write{err} << '\n';
 		return;
 	}
 
 	file_view = MapViewOfFile(file_mapping, FILE_MAP_READ, 0, 0, 0);
 	if(file_view == nullptr) {
-		log << "Couldn't map view of " << fname << ": 0x" << std::hex << GetLastError() << std::dec << '\n';
+		const auto err = GetLastError();
+		log << "Couldn't map view of " << fname << ": " << error_write{err} << '\n';
 		return;
 	}
 }

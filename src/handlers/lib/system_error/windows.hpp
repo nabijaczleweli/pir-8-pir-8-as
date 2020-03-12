@@ -21,13 +21,13 @@
 // DEALINGS IN THE SOFTWARE.
 
 
-#include "windows.hpp"
-#include "posix.hpp"
-#include <ostream>
+#ifdef _WIN32
 
 
-struct error_write {
-	SYSTEM_ERROR_TYPE error;
-};
+#include <windows.h>
 
-std::ostream & operator<<(std::ostream & out, error_write error);
+
+#define SYSTEM_ERROR_TYPE DWORD
+
+
+#endif

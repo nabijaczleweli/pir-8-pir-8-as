@@ -21,13 +21,36 @@
 // DEALINGS IN THE SOFTWARE.
 
 
-#include "windows.hpp"
-#include "posix.hpp"
-#include <ostream>
+#ifdef _WIN32
 
 
-struct error_write {
-	SYSTEM_ERROR_TYPE error;
-};
+#include "system_error.hpp"
+#include <windows.h>
 
-std::ostream & operator<<(std::ostream & out, error_write error);
+
+namespace {
+	template <class T>
+	struct quickscope_wrapper {
+		T destr;
+
+		quickscope_wrapper(T d) : destr(std::move(d)) {}
+		~quickscope_wrapper() { destr(); }
+	};
+}
+
+
+std::ostream & operator<<(std::ostream & out, error_write error) {
+	LPTSTR message = nullptr;
+	quickscope_wrapper message_deleter{[&] { LocalFree(message); }};
+
+	if(FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, error.error,
+	                 MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPTSTR>(&message), 0, nullptr))
+		out << message;
+	else
+		out << "0x" << std::hex << error.error << std::dec;
+
+	return out;
+}
+
+
+#endif
