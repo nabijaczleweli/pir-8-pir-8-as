@@ -23,12 +23,13 @@
 include configMakefile
 
 
-LDAR := $(PIC) $(LNCXXAR) -L$(BLDDIR) $(foreach l,$(OS_LD_LIBS) handler,-l$(l))
-INCAR := $(foreach l,ext/pir-8-emu/include,-isystem$(l))
+LDAR := $(PIC) $(LNCXXAR) -L$(BLDDIR) $(foreach l,$(OS_LD_LIBS) handler fmt,-l$(l))
+INCAR := $(foreach l,pir-8-emu fmt,-isystem$(EXTDIR)$(l)/include)
 HANDLER_SOURCES := $(sort $(wildcard $(HNDDIR)*.cpp))
 HANDLER_LIB_SOURCES := $(sort $(wildcard $(HNDDIR)**/*.cpp $(HNDDIR)**/**/*.cpp))
 TEST_SOURCES := $(sort $(wildcard $(TSTDIR)*.cpp $(TSTDIR)**/*.cpp $(TSTDIR)**/**/*.cpp))
 ASSEMBLY_SOURCES := $(sort $(wildcard $(ASMDIR)*.p8a.pp))
+FMT_SOURCES := $(sort $(wildcard $(EXTDIR)fmt/src/*.cc))
 
 
 .PHONY : all clean handlers assemblies tests
@@ -52,10 +53,14 @@ $(BLDDIR)libhandler$(ARCH) : $(patsubst $(SRCDIR)%.cpp,$(OBJDIR)%$(OBJ),$(HANDLE
 	@mkdir -p $(dir $@)
 	$(AR) crs $@ $^
 
-
-$(OUTDIR)$(PREDLL)%$(DLL) : $(BLDDIR)libhandler$(ARCH) $(OBJDIR)%$(OBJ)
+$(BLDDIR)libfmt$(ARCH) : $(patsubst $(EXTDIR)%.cc,$(OBJDIR)ext/%$(OBJ),$(FMT_SOURCES))
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXXAR) -o$@ $(filter-out $<,$^) $(LDAR) -shared
+	$(AR) crs $@ $^
+
+
+$(OUTDIR)$(PREDLL)%$(DLL) : $(OBJDIR)%$(OBJ) $(foreach l,fmt handler,$(BLDDIR)lib$(l)$(ARCH))
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXAR) -o$@ $< $(LDAR) -shared
 
 $(OBJDIR)%$(OBJ) : $(SRCDIR)%.cpp
 	@mkdir -p $(dir $@)
@@ -68,6 +73,10 @@ $(OBJDIR)%$(OBJ) : $(HNDDIR)%.cpp
 $(OBJDIR)tests/%$(OBJ) : $(TSTDIR)%.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXAR) $(INCAR) -I$(TSTDIR) -I$(HNDDIR) -c -o$@ $^
+
+$(OBJDIR)ext/%$(OBJ) : $(EXTDIR)%.cc
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXAR) $(INCAR) -c -o$@ $^
 
 $(BLDDIR)% : $(ASMDIR)%.pp
 	@mkdir -p $(dir $@)

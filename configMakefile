@@ -63,3 +63,4 @@ SRCDIR := src/
 HNDDIR := $(SRCDIR)handlers/
 ASMDIR := $(SRCDIR)assemblies/
 TSTDIR := tests/
+EXTDIR := ext/
