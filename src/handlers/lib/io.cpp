@@ -22,10 +22,10 @@
 
 
 #include "io.hpp"
-#include "mmap/mmap_view.hpp"
-#include <algorithm>
 #include <charconv>
+#include <fstream>
 #include <ostream>
+#include <string>
 #include <string_view>
 #include <system_error>
 
@@ -42,6 +42,25 @@ static const char * from_chars_reason(std::errc err) {
 			return "out of range";
 		default:
 			__builtin_unreachable();
+	}
+}
+
+
+namespace {
+	struct openmode_write {
+		std::ios::openmode inner;
+	};
+
+	static std::ostream & operator<<(std::ostream & out, openmode_write self) {
+		if(self.inner & std::ios::in)
+			out << 'r';
+		if(self.inner & std::ios::out)
+			out << 'w';
+		if(self.inner & std::ios::app)
+			out << '+';
+		if(self.inner & std::ios::binary)
+			out << 'b';
+		return out;
 	}
 }
 
@@ -68,12 +87,12 @@ io_config load_configured_io(std::string_view input, const char * input_name, st
 		auto parse_result = std::from_chars(input.data(), input.data() + input.size(), io_num);
 		if(parse_result.ec != std::errc{}) {
 			log << "Couldn't parse " << input_name << ':' << FILE_OFFSET(input) << ": " << from_chars_reason(parse_result.ec) << ".\nData left: " << input << '\n';
-			return ret;
+			break;
 		}
 		if(ret.find(io_num) != ret.end()) {
 			log << input_name << ':' << FILE_OFFSET(input) << ": file #" << static_cast<unsigned int>(io_num) << " specified twice."
 			    << "\nData left: " << input << '\n';
-			return ret;
+			break;
 		}
 		input.remove_prefix(parse_result.ptr - input.data());
 
@@ -91,7 +110,7 @@ io_config load_configured_io(std::string_view input, const char * input_name, st
 				mode = std::ios::out;
 			else {
 				log << input_name << ':' << FILE_OFFSET(raw_mode) << ": invalid open-mode for file #" << static_cast<unsigned int>(io_num) << ": " << raw_mode << '\n';
-				return ret;
+				break;
 			}
 
 			input.remove_prefix(off);
@@ -110,6 +129,22 @@ io_config load_configured_io(std::string_view input, const char * input_name, st
 			input.remove_prefix(off);
 		} else
 			break;
+	}
+
+	return ret;
+}
+
+io_mapping open_configured_io(const io_config & cfg, std::ostream & log) {
+	io_mapping ret;
+
+	for(auto && spec : cfg) {
+		const auto mode = spec.second.first | std::ios::binary;
+		std::fstream stream{std::string{spec.second.second}, mode};
+		if(!stream) {
+			log << "Couldn't open " << spec.second.second << " with mode " << openmode_write{mode} << "!\n";
+			break;
+		}
+		ret.insert(std::make_pair(spec.first, std::move(stream)));
 	}
 
 	return ret;
