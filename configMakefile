@@ -26,12 +26,14 @@ ifeq "$(OS)" "Windows_NT"
 	PREDLL :=
 	PIC :=
 	OS_LD_LIBS :=
+	OS_CXXAR := -DWIN32_LEAN_AND_MEAN
 else
 	DLL := .so
 	EXE :=
 	PREDLL := lib
 	PIC := -fPIC
 	OS_LD_LIBS :=
+	OS_CXXAR := -D_XOPEN_SOURCE=700 -U_GNU_SOURCE
 endif
 
 ifneq "$(ADDITIONAL_INCLUDE_DIR)" ""
@@ -52,7 +54,7 @@ ARCH := .a
 AR := ar
 CPP := cpp
 PIR_8_AS := pir-8-as
-CXXAR := -O3 -std=c++17 -pedantic -Wall -Wextra -pipe $(INCCXXAR) $(PIC)
+CXXAR := -O3 -std=c++17 -pedantic -Wall -Wextra -pipe $(OS_CXXAR) $(INCCXXAR) $(PIC)
 
 OUTDIR := out/
 BLDDIR := out/build/

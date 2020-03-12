@@ -24,51 +24,18 @@
 #ifndef _WIN32
 
 
-#include "../system_error/system_error.hpp"
-#include "mmap_view.hpp"
-#include <fcntl.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <unistd.h>
+#include "system_error.hpp"
+#include <stdio.h>
+#include <string.h>
 
 
-mmap_view::mmap_view(const char * fname, std::ostream & log) {
-	raw_file = open(fname, O_RDONLY);
-	if(raw_file == -1) {
-		log << "Couldn't open " << fname << ": " << error_write{errno} << '\n';
-		return;
-	}
-
-	struct stat file_info;
-	if(fstat(raw_file, &file_info)) {
-		log << "Couldn't get size of " << fname << ": " << error_write{errno} << '\n';
-		return;
-	}
-	file_size = file_info.st_size;
-
-	if(file_size == 0) {
-		log << "Size of " << fname << " is 0, not mapping further\n";
-		return;
-	}
-
-	file_view = mmap(nullptr, file_size, PROT_READ, MAP_PRIVATE, raw_file, 0);
-	if(file_view == MAP_FAILED) {
-		file_view = nullptr;
-		log << "Couldn't map " << fname << ": " << error_write{errno} << '\n';
-		return;
-	}
-}
-
-mmap_view::~mmap_view() {
-	if(file_view) {
-		munmap(file_view, file_size);
-		file_view = nullptr;
-	}
-
-	if(raw_file != -1) {
-		close(raw_file);
-		raw_file = -1;
-	}
+std::ostream & operator<<(std::ostream & out, error_write error) {
+	char buf[BUFSIZ]{};
+	if(!strerror_r(error.error, buf, sizeof(buf)))
+		out << buf;
+	else
+		out << error.error;
+	return out;
 }
 
 
