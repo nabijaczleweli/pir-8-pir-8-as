@@ -27,6 +27,7 @@
 #include "posix.hpp"
 #include "windows.hpp"
 #include <cstdio>
+#include <string_view>
 
 
 class mmap_view {
@@ -36,7 +37,7 @@ private:
 	void * file_view{};
 
 public:
-	mmap_view(const char * fname, FILE* log);
+	mmap_view(const char * fname, FILE * log);
 	mmap_view(const mmap_view &) = delete;
 	~mmap_view();
 
