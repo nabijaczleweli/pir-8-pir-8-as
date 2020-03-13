@@ -51,7 +51,7 @@ static io_config read_io_config(const mmap_view & input_file, std::FILE * log) {
 	fmt::print(log, "Mapped bulk.io ({}B)!\n\n", input_file.size());
 
 	const auto config = load_configured_io(input_file, "bulk.io", log);
-	fmt::print(log, "{} files configured: ", input_file.size());
+	fmt::print(log, "{} files configured: ", config.size());
 	for(auto && spec : config)
 		fmt::print(log, "{}; ", spec.second.second);
 	fmt::print(log, "\n");
@@ -92,12 +92,12 @@ unsigned char pir_8_emu_handle_read(void * state_p, unsigned char port) {
 	fmt::print(state.log, "pir_8_emu_handle_read({:#02x}): ", port);
 
 	if(auto stream = state.io_map.find(port); stream != state.io_map.end()) {
-		const auto raw_data = fgetc(stream->second);
-		const char data = raw_data == EOF ? 0x00 : raw_data;
+		const auto raw_data      = fgetc(stream->second);
+		const unsigned char data = (raw_data == EOF) ? 0x00 : raw_data;
 
 		if(std::feof(stream->second))
 			fmt::print(state.log, "EOF");
-		if(std::ferror(stream->second))
+		else if(std::ferror(stream->second))
 			fmt::print(state.log, "error");
 		else
 			fmt::print(state.log, "got {}", maybe_printable_byte{data});
@@ -112,7 +112,7 @@ unsigned char pir_8_emu_handle_read(void * state_p, unsigned char port) {
 
 void pir_8_emu_handle_write(void * state_p, unsigned char port, unsigned char byte) {
 	auto & state = *static_cast<bulk_io_state *>(state_p);
-	fmt::print(state.log, "pir_8_emu_handle_write({:#02x}, {}): ", port, maybe_printable_byte{static_cast<char>(byte)});
+	fmt::print(state.log, "pir_8_emu_handle_write({:#02x}, {}): ", port, maybe_printable_byte{byte});
 
 	if(auto stream = state.io_map.find(port); stream != state.io_map.end()) {
 		std::fputc(byte, stream->second);

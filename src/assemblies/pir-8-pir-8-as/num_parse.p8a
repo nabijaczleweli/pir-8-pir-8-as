@@ -1,2 +1,94 @@
+; The MIT License (MIT)
+
+; Copyright (c) 2020 nabijaczleweli
+
+; Permission is hereby granted, free of charge, to any person obtaining a copy of
+; this software and associated documentation files (the "Software"), to deal in
+; the Software without restriction, including without limitation the rights to
+; use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+; the Software, and to permit persons to whom the Software is furnished to do so,
+; subject to the following conditions:
+
+; The above copyright notice and this permission notice shall be included in all
+; copies or substantial portions of the Software.
+
+; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+; FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+; COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+; IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+; CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+; Input  = PORT 0
+; Output = D
+; Return address on stack
+; Error  = PORT 2 + HALT
+:label save num_parse
+
+
 LOAD IMM BYTE A
-0x42
+0                            ; Input port
+MOVE A D
+
+:label save num_parse-read_input_digit
+PORT IN S                    ; S = incoming byte
+
+LOAD IMM BYTE B
+0x29                         ; 0x30 = ASCII '0'
+COMP B                       ; F_G  = S >= '0'
+LOAD IMM WIDE ADR
+:label load full num_parse-lower_bound_ok
+JMPG
+LOAD IMM WIDE ADR
+:label load full num_parse-lower_bound_not_ok
+JUMP
+
+:label save num_parse-lower_bound_ok
+LOAD IMM BYTE B
+0x39                         ; 0x39 = ASCII '9'
+COMP B                       ; F_G  = S > '9'
+LOAD IMM WIDE ADR
+:label load full num_parse-upper_bound_not_ok
+JMPG
+MOVE S B                     ; B = S = incoming byte
+
+:label save num_parse-upper_bound_ok
+; D = D * 10
+; D = ((D << 2) + D) << 1
+; D = (((D << 1) << 1) + D) << 1
+MOVE D X
+ALU SOR LEFT LSF
+MOVE S X
+ALU SOR LEFT LSF
+MOVE S X
+
+MOVE D Y
+ALU ADD
+MOVE S X
+
+ALU SOR LEFT LSF
+MOVE S D
+
+
+; D = D + (B - '0')
+MOVE B X
+LOAD IMM BYTE Y
+0x30                         ; 0x30 = ASCII '0'
+ALU SUB
+
+MOVE S X
+MOVE D Y
+ALU ADD
+MOVE S D
+
+LOAD IMM WIDE ADR
+:label load full num_parse-read_input_digit
+JUMP
+
+
+:label save num_parse-upper_bound_not_ok
+:label save num_parse-lower_bound_not_ok
+STCK POP A&B
+MADR WRITE A&B
+JUMP

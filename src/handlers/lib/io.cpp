@@ -126,7 +126,7 @@ io_mapping open_configured_io(const io_config & cfg, std::FILE * log) {
 	io_mapping ret;
 
 	for(auto && spec : cfg) {
-		file output{std::string{spec.second.second}.c_str(), spec.second.first};
+		file output{std::string{spec.second.second}.c_str(), spec.second.first, (spec.second.first & file_mode::read) == file_mode::read};
 		if(!output) {
 			fmt::print(log, "Couldn't open {} with mode {}!\n", spec.second.second, spec.second.first);
 			break;

@@ -32,7 +32,7 @@
 
 
 struct maybe_printable_byte {
-	char data;
+	unsigned char data;
 };
 
 template <>
