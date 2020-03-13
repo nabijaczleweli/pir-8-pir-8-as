@@ -22,9 +22,9 @@
 
 
 #include "assert.hpp"
+#include "lib/file.hpp"
 #include "lib/io.hpp"
-#include <ios>
-#include <iostream>
+#include <cstdio>
 
 
 static const char * const TEST_BUF = R"(
@@ -34,12 +34,16 @@ static const char * const TEST_BUF = R"(
 2  w second.out
 )";
 
-static const io_config TEST_EXPECTED = {{12, {std::ios::in, "twelfth.in"}}};
+static const io_config TEST_EXPECTED = {{12, {file_mode::read, "twelfth.in"}}};
 
 
 int main() {
-	assert_eq_print(load_configured_io(TEST_BUF, "test data", std::cerr), TEST_EXPECTED, "Mismatch",
-	                [](const auto & what, auto & out) { out << '{' << what.size() << " members}"; });
+	assert_eq_print(load_configured_io(TEST_BUF, "test data", stderr), TEST_EXPECTED, "Mismatch", [](const auto & what) {
+		std::string ret;
+		for(auto && kv : what)
+			ret += fmt::format("{{{}, {{{}, {}}}}}; ", kv.first, kv.second.first, kv.second.second);
+		return ret;
+	});
 
 	test_ok();
 }

@@ -24,10 +24,24 @@
 #ifdef _WIN32
 
 
+#include "display.hpp"
+#include <fmt/format.h>
 #include <windows.h>
 
 
-#define SYSTEM_ERROR_TYPE DWORD
+detail::error_write_data::error_write_data(DWORD error) {
+	if(FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, error,
+	                 MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPTSTR>(&message), 0, nullptr))
+		buf = message;
+	else {
+		number = fmt::format("{:#x}", error);
+		buf    = number.c_str();
+	}
+}
+
+detail::error_write_data::~error_write_data() {
+	LocalFree(message);
+}
 
 
 #endif

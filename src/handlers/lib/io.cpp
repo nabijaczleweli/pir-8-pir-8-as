@@ -23,8 +23,7 @@
 
 #include "io.hpp"
 #include <charconv>
-#include <fstream>
-#include <ostream>
+#include <fmt/format.h>
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -46,26 +45,7 @@ static const char * from_chars_reason(std::errc err) {
 }
 
 
-namespace {
-	struct openmode_write {
-		std::ios::openmode inner;
-	};
-
-	static std::ostream & operator<<(std::ostream & out, openmode_write self) {
-		if(self.inner & std::ios::in)
-			out << 'r';
-		if(self.inner & std::ios::out)
-			out << 'w';
-		if(self.inner & std::ios::app)
-			out << '+';
-		if(self.inner & std::ios::binary)
-			out << 'b';
-		return out;
-	}
-}
-
-
-io_config load_configured_io(std::string_view input, const char * input_name, std::ostream & log) {
+io_config load_configured_io(std::string_view input, const char * input_name, std::FILE * log) {
 	const auto input_start = input.data();
 	io_config ret{};
 
@@ -86,12 +66,17 @@ io_config load_configured_io(std::string_view input, const char * input_name, st
 		std::uint8_t io_num{};
 		auto parse_result = std::from_chars(input.data(), input.data() + input.size(), io_num);
 		if(parse_result.ec != std::errc{}) {
-			log << "Couldn't parse " << input_name << ':' << FILE_OFFSET(input) << ": " << from_chars_reason(parse_result.ec) << ".\nData left: " << input << '\n';
+			fmt::print(log,
+			           "Couldn't parse {}:{}: {}.\n"
+			           "Data left: {}\n",
+			           input_name, FILE_OFFSET(input), from_chars_reason(parse_result.ec), input);
 			break;
 		}
 		if(ret.find(io_num) != ret.end()) {
-			log << input_name << ':' << FILE_OFFSET(input) << ": file #" << static_cast<unsigned int>(io_num) << " specified twice."
-			    << "\nData left: " << input << '\n';
+			fmt::print(log,
+			           "{}:{}: file #{} specified twice.\n"
+			           "Data left: {}\n",
+			           input_name, FILE_OFFSET(input), static_cast<unsigned int>(io_num), input);
 			break;
 		}
 		input.remove_prefix(parse_result.ptr - input.data());
@@ -101,15 +86,18 @@ io_config load_configured_io(std::string_view input, const char * input_name, st
 		else
 			break;
 
-		std::ios::openmode mode{};
+		file_mode mode{};
 		if(const auto off = input.find_first_of(WHITESPACE); off != std::string_view::npos) {
 			std::string_view raw_mode(input.data(), off);
 			if(raw_mode == "r")
-				mode = std::ios::in;
+				mode = file_mode::read;
 			else if(raw_mode == "w")
-				mode = std::ios::out;
+				mode = file_mode::append;
 			else {
-				log << input_name << ':' << FILE_OFFSET(raw_mode) << ": invalid open-mode for file #" << static_cast<unsigned int>(io_num) << ": " << raw_mode << '\n';
+				fmt::print(log,
+				           "{}:{}: invalid open-mode for file #{}: .\n"
+				           "Data left: {}\n",
+				           input_name, FILE_OFFSET(input), static_cast<unsigned int>(io_num), raw_mode, input);
 				break;
 			}
 
@@ -134,17 +122,16 @@ io_config load_configured_io(std::string_view input, const char * input_name, st
 	return ret;
 }
 
-io_mapping open_configured_io(const io_config & cfg, std::ostream & log) {
+io_mapping open_configured_io(const io_config & cfg, std::FILE * log) {
 	io_mapping ret;
 
 	for(auto && spec : cfg) {
-		const auto mode = spec.second.first | std::ios::binary;
-		std::fstream stream{std::string{spec.second.second}, mode};
-		if(!stream) {
-			log << "Couldn't open " << spec.second.second << " with mode " << openmode_write{mode} << "!\n";
+		file output{std::string{spec.second.second}.c_str(), spec.second.first};
+		if(!output) {
+			fmt::print(log, "Couldn't open {} with mode {}!\n", spec.second.second, spec.second.first);
 			break;
 		}
-		ret.insert(std::make_pair(spec.first, std::move(stream)));
+		ret.insert(std::make_pair(spec.first, std::move(output)));
 	}
 
 	return ret;

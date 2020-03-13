@@ -24,7 +24,7 @@
 #ifndef _WIN32
 
 
-#include "../system_error/system_error.hpp"
+#include "../display/display.hpp"
 #include "mmap_view.hpp"
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -32,29 +32,29 @@
 #include <unistd.h>
 
 
-mmap_view::mmap_view(const char * fname, std::ostream & log) {
+mmap_view::mmap_view(const char * fname, std::FILE * log) {
 	raw_file = open(fname, O_RDONLY);
 	if(raw_file == -1) {
-		log << "Couldn't open " << fname << ": " << error_write{errno} << '\n';
+		fmt::print(log, "Couldn't open {}: \n", fname, error_write{errno});
 		return;
 	}
 
 	struct stat file_info;
 	if(fstat(raw_file, &file_info)) {
-		log << "Couldn't get size of " << fname << ": " << error_write{errno} << '\n';
+		fmt::print(log, "Couldn't get size of {}: \n", fname, error_write{errno});
 		return;
 	}
 	file_size = file_info.st_size;
 
 	if(file_size == 0) {
-		log << "Size of " << fname << " is 0, not mapping further\n";
+		fmt::print(log, "Size of {} is 0, not mapping further\n", fname);
 		return;
 	}
 
 	file_view = mmap(nullptr, file_size, PROT_READ, MAP_PRIVATE, raw_file, 0);
 	if(file_view == MAP_FAILED) {
 		file_view = nullptr;
-		log << "Couldn't map " << fname << ": " << error_write{errno} << '\n';
+		fmt::print(log, "Couldn't map {}: \n", fname, error_write{errno});
 		return;
 	}
 }

@@ -24,17 +24,16 @@
 #pragma once
 
 
+#include "file.hpp"
 #include <cstdint>
-#include <fstream>
-#include <ios>
+#include <cstdio>
 #include <map>
-#include <ostream>
 #include <string_view>
 
 
-using io_config  = std::map<std::uint8_t, std::pair<std::ios::openmode, std::string_view>>;
-using io_mapping = std::map<std::uint8_t, std::fstream>;
+using io_config  = std::map<std::uint8_t, std::pair<file_mode, std::string_view>>;
+using io_mapping = std::map<std::uint8_t, file>;
 
 
-io_config load_configured_io(std::string_view input, const char * input_name, std::ostream & log);
-io_mapping open_configured_io(const io_config & cfg, std::ostream & log);
+io_config load_configured_io(std::string_view input, const char * input_name, std::FILE * log);
+io_mapping open_configured_io(const io_config & cfg, std::FILE * log);

@@ -21,16 +21,16 @@
 // DEALINGS IN THE SOFTWARE.
 
 
-#include "lib/mmap/mmap_view.hpp"
 #include "assert.hpp"
+#include "lib/mmap/mmap_view.hpp"
+#include <cstdio>
 #include <fstream>
-#include <iostream>
 #include <string>
 #include <string_view>
 
 
 int main() {
-	mmap_view make_mapped("Makefile", std::cerr);
+	mmap_view make_mapped("Makefile", stderr);
 	assert(make_mapped, "Couldn't map file");
 
 	std::string make_read;

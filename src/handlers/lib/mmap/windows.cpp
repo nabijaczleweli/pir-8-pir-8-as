@@ -24,43 +24,44 @@
 #ifdef _WIN32
 
 
-#include "../system_error/system_error.hpp"
+#include "../display/display.hpp"
 #include "mmap_view.hpp"
+#include <fmt/format.h>
 #include <windows.h>
 
 
-mmap_view::mmap_view(const char * fname, std::ostream & log) {
+mmap_view::mmap_view(const char * fname, FILE * log) {
 	raw_file = CreateFileA(fname, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 	if(raw_file == INVALID_HANDLE_VALUE) {
 		const auto err = GetLastError();
-		log << "Couldn't open " << fname << ": " << error_write{err} << '\n';
+		fmt::print(log, "Couldn't open {}: \n", fname, error_write{err});
 		return;
 	}
 
 	LARGE_INTEGER file_size_temp;
 	if(!GetFileSizeEx(raw_file, &file_size_temp)) {
 		const auto err = GetLastError();
-		log << "Couldn't get size of " << fname << ": " << error_write{err} << '\n';
+		fmt::print(log, "Couldn't get size of {}: \n", fname, error_write{err});
 		return;
 	}
 	file_size = file_size_temp.QuadPart;
 
 	if(file_size == 0) {
-		log << "Size of " << fname << " is 0, not mapping further\n";
+		fmt::print(log, "Size of {} is 0, not mapping further\n", fname);
 		return;
 	}
 
 	file_mapping = CreateFileMappingA(raw_file, nullptr, PAGE_READONLY, 0, 0, nullptr);
 	if(file_mapping == nullptr) {
 		const auto err = GetLastError();
-		log << "Couldn't create mapping for " << fname << ": " << error_write{err} << '\n';
+		fmt::print(log, "Couldn't create mapping for {}: \n", fname, error_write{err});
 		return;
 	}
 
 	file_view = MapViewOfFile(file_mapping, FILE_MAP_READ, 0, 0, 0);
 	if(file_view == nullptr) {
 		const auto err = GetLastError();
-		log << "Couldn't map view of " << fname << ": " << error_write{err} << '\n';
+		fmt::print(log, "Couldn't map view of {}: \n", fname, error_write{err});
 		return;
 	}
 }

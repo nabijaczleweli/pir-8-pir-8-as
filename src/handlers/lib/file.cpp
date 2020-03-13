@@ -36,11 +36,8 @@ file_mode operator|(file_mode lhs, file_mode rhs) noexcept {
 }
 
 
-file::file(const char * fname, file_mode mode, bool buffer) : handle{nullptr} {
-	if(mode == NOMODE)
-		return;
-
-	bool rw = ((mode & file_mode::read) != NOMODE) && ((mode & (file_mode::write | file_mode::append)) != NOMODE);
+detail::file_mode_buf::file_mode_buf(file_mode mode) noexcept {
+	const bool rw = ((mode & file_mode::read) != NOMODE) && ((mode & (file_mode::write | file_mode::append)) != NOMODE);
 
 	char mode_c{};
 	if((mode & file_mode::read) != NOMODE)
@@ -51,19 +48,31 @@ file::file(const char * fname, file_mode mode, bool buffer) : handle{nullptr} {
 	else if((mode & file_mode::write) != NOMODE)
 		mode_c = 'w';
 
-	char mode_buf[4]{};
-	mode_buf[0] = rw ? 'a' : mode_c;
-	mode_buf[1] = 'b';
-	mode_buf[2] = rw ? '+' : '\0';
-	mode_buf[3] = '\0';  // Write this here explicitly as well to enable compiler warning
-	// std::cout << mode_buf << '\n';
+	buf[0] = rw ? 'a' : mode_c;
+	buf[1] = 'b';
+	buf[2] = rw ? '+' : '\0';
+	buf[3] = '\0';
+}
 
-	handle = std::fopen(fname, mode_buf);
+
+file::file(const char * fname, file_mode mode, bool buffer) : handle{nullptr} {
+	if(mode == NOMODE)
+		return;
+
+	const detail::file_mode_buf mode_buf{mode};
+	// fmt::print("{}\n", mode_buf.buf);
+
+	handle = std::fopen(fname, mode_buf.buf);
 	if(!handle)
 		return;
 
 	if(!buffer)
 		std::setbuf(handle, nullptr);
+}
+
+file::file(file && other) {
+	handle = other.handle;
+	other.handle = nullptr;
 }
 
 file::~file() {

@@ -21,13 +21,27 @@
 // DEALINGS IN THE SOFTWARE.
 
 
-#include "windows.hpp"
-#include "posix.hpp"
-#include <ostream>
+// Disabled by default, since it needs corresponding code uncommented in lib/file.cpp
+#if 0
+#include "lib/file.hpp"
+#include "assert.hpp"
+#include <fmt/format.h>
 
 
-struct error_write {
-	SYSTEM_ERROR_TYPE error;
-};
 
-std::ostream & operator<<(std::ostream & out, error_write error);
+int main() {
+	file{";:!::!:::!:", file_mode::read};
+	file{";:!::!:::!:", file_mode::write};
+	file{";:!::!:::!:", file_mode::append};
+	file{";:!::!:::!:", file_mode::write | file_mode::append};
+	file{";:!::!:::!:", file_mode::read | file_mode::write | file_mode::append};
+
+	file f{"hewwo", file_mode::append};
+	fmt::print("{}\n", (void *)(FILE *)f);
+	std::fprintf(f, "OwO\n");
+
+	test_ok();
+}
+#else
+int main() {}
+#endif

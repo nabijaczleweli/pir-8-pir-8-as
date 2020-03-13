@@ -24,42 +24,34 @@
 #pragma once
 
 
-#include <iostream>
+#include <cstdio>
+#include <fmt/format.h>
 #undef assert
 
 
-#define assert(expr, message)                                                                                 \
-	do                                                                                                          \
-		if(!(expr)) {                                                                                             \
-			std::cerr << __FILE__ << ':' << __LINE__ << ": assertion failed: " << #expr << ": " << message << '\n'; \
-			return __LINE__;                                                                                        \
-		}                                                                                                         \
+#define assert(expr, message)                                                                      \
+	do                                                                                               \
+		if(!(expr)) {                                                                                  \
+			fmt::print(stderr, "{}:{}: assertion failed: {}: {}\n", __FILE__, __LINE__, #expr, message); \
+			return __LINE__;                                                                             \
+		}                                                                                              \
 	while(false)
 
-#define assert_eq(lhs, rhs, message)                                                                                                                  \
-	do {                                                                                                                                                \
-		const auto assert_eq_lhs = (lhs);                                                                                                                 \
-		const auto assert_eq_rhs = (rhs);                                                                                                                 \
-		if(!(assert_eq_lhs == assert_eq_rhs)) {                                                                                                           \
-			std::cerr << __FILE__ << ':' << __LINE__ << ": assertion failed: " << #lhs << " == " << #rhs << ": " << message << "\n  lhs: " << assert_eq_lhs \
-			          << "\n  rhs: " << assert_eq_rhs << '\n';                                                                                              \
-			return __LINE__;                                                                                                                                \
-		}                                                                                                                                                 \
-	} while(false)
+#define assert_eq(lhs, rhs, message) assert_eq_print(lhs, rhs, message, [](const auto & what) { return what; })
 
-#define assert_eq_print(lhs, rhs, message, print)                                                                                     \
-	do {                                                                                                                                \
-		const auto assert_eq_lhs = (lhs);                                                                                                 \
-		const auto assert_eq_rhs = (rhs);                                                                                                 \
-		if(!(assert_eq_lhs == assert_eq_rhs)) {                                                                                           \
-			std::cerr << __FILE__ << ':' << __LINE__ << ": assertion failed: " << #lhs << " == " << #rhs << ": " << message << "\n  lhs: "; \
-			print(assert_eq_lhs, std::cerr);                                                                                                \
-			std::cerr << "\n  rhs: ";                                                                                                       \
-			print(assert_eq_rhs, std::cerr);                                                                                                \
-			std::cerr << '\n';                                                                                                              \
-			return __LINE__;                                                                                                                \
-		}                                                                                                                                 \
+#define assert_eq_print(lhs, rhs, message, print_fn)                                                         \
+	do {                                                                                                       \
+		const auto assert_eq_lhs = (lhs);                                                                        \
+		const auto assert_eq_rhs = (rhs);                                                                        \
+		if(!(assert_eq_lhs == assert_eq_rhs)) {                                                                  \
+			fmt::print(stderr,                                                                                     \
+			           "{}:{}: assertion failed: {} == {}: {}\n"                                                   \
+			           "  lhs: {}\n"                                                                               \
+			           "  rhs: {}\n",                                                                              \
+			           __FILE__, __LINE__, #lhs, #rhs, message, print_fn(assert_eq_lhs), print_fn(assert_eq_rhs)); \
+			return __LINE__;                                                                                       \
+		}                                                                                                        \
 	} while(false)
 
 
-#define test_ok() std::cout << __FILE__ << ": OK\n";
+#define test_ok() fmt::print("{}: OK\n", __FILE__);

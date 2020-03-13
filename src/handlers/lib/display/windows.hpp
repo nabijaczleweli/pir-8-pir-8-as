@@ -21,21 +21,19 @@
 // DEALINGS IN THE SOFTWARE.
 
 
-#pragma once
+#ifdef _WIN32
 
 
-#include <ostream>
-#include <cstdint>
+#include <string>
+#include <windows.h>
 
 
-struct byte_write {
-	std::uint8_t byte;
-};
+#define SYSTEM_ERROR_TYPE DWORD
+#define SYSTEM_ERROR_DATA_FIELDS \
+	const char * buf = nullptr;    \
+	LPTSTR message   = nullptr;    \
+	std::string number;            \
+	~error_write_data();
 
-struct maybe_printable_write {
-	char data;
-};
 
-
-std::ostream & operator<<(std::ostream & out, byte_write self);
-std::ostream & operator<<(std::ostream & out, maybe_printable_write self);
+#endif

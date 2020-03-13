@@ -21,36 +21,27 @@
 // DEALINGS IN THE SOFTWARE.
 
 
-#ifdef _WIN32
+#include "assert.hpp"
+#include "lib/file.hpp"
 
 
-#include "system_error.hpp"
-#include <windows.h>
+// enum class file_mode : std::uint8_t {
+	// read   = 0b001,
+	// write  = 0b010,
+	// append = 0b100,
+// };
+	// buf[0] = rw ? 'a' : mode_c;
+	// buf[1] = 'b';
+	// buf[2] = rw ? '+' : '\0';
+	// buf[3] = '\0';
 
+int main() {
+	assert_eq(fmt::format("{}", file_mode::read), "rb", "Mismatch");
+	assert_eq(fmt::format("{}", file_mode::write), "wb", "Mismatch");
+	assert_eq(fmt::format("{}", file_mode::append), "ab", "Mismatch");
+	assert_eq(fmt::format("{}", file_mode::read | file_mode::write), "ab+", "Mismatch");
+	assert_eq(fmt::format("{}", file_mode::read | file_mode::append), "ab+", "Mismatch");
+	assert_eq(fmt::format("{}", file_mode::read | file_mode::write | file_mode::append), "ab+", "Mismatch");
 
-namespace {
-	template <class T>
-	struct quickscope_wrapper {
-		T destr;
-
-		quickscope_wrapper(T d) : destr(std::move(d)) {}
-		~quickscope_wrapper() { destr(); }
-	};
+	test_ok();
 }
-
-
-std::ostream & operator<<(std::ostream & out, error_write error) {
-	LPTSTR message = nullptr;
-	quickscope_wrapper message_deleter{[&] { LocalFree(message); }};
-
-	if(FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, error.error,
-	                 MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPTSTR>(&message), 0, nullptr))
-		out << message;
-	else
-		out << "0x" << std::hex << error.error << std::dec;
-
-	return out;
-}
-
-
-#endif

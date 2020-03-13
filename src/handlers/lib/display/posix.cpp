@@ -21,20 +21,20 @@
 // DEALINGS IN THE SOFTWARE.
 
 
-#include "lib/file.hpp"
-#include "assert.hpp"
+#ifndef _WIN32
 
 
-int main() {
-	file{";:!::!:::!:", file_mode::read};
-	file{";:!::!:::!:", file_mode::write};
-	file{";:!::!:::!:", file_mode::append};
-	file{";:!::!:::!:", file_mode::write | file_mode::append};
-	file{";:!::!:::!:", file_mode::read | file_mode::write | file_mode::append};
+#include "display.hpp"
+#include <cstdio>
+#include <fmt/format.h>
+#undef _GNU_SOURCE
+#include <string.h>
 
-	file f{"hewwo", file_mode::append};
-	std::cerr << (FILE*)f << '\n';
-	std::fprintf(f, "OwO\n");
 
-	test_ok();
+detail::error_write_data::error_write_data(int error) {
+	if(strerror_r(error, buf, sizeof(buf)))
+		std::snprintf(buf, sizeof(buf), "%d", error);
 }
+
+
+#endif

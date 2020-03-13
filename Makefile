@@ -86,6 +86,6 @@ $(OUTDIR)%$(PIR_8_EXE) : $(BLDDIR)%.p8a
 	@mkdir -p $(dir $@)
 	$(PIR_8_AS) -o$@ $^
 
-$(OUTDIR)%$(EXE) : $(BLDDIR)libhandler$(ARCH) $(OBJDIR)%$(OBJ)
+$(OUTDIR)%$(EXE) : $(OBJDIR)%$(OBJ) $(foreach l,fmt handler,$(BLDDIR)lib$(l)$(ARCH))
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXXAR) -o$@ $(filter-out $<,$^) $(LDAR)
+	$(CXX) $(CXXAR) -o$@ $< $(LDAR)

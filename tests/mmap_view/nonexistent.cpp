@@ -21,12 +21,13 @@
 // DEALINGS IN THE SOFTWARE.
 
 
-#include "lib/mmap/mmap_view.hpp"
 #include "assert.hpp"
+#include "lib/mmap/mmap_view.hpp"
+#include <cstdio>
 
 
 int main() {
-	mmap_view make_mapped("not a makefile, оr, indeed, anything at all", std::cerr);
+	mmap_view make_mapped("not a makefile, оr, indeed, anything at all", stderr);
 	assert(!make_mapped, "Mapped nonexistent file");
 
 	test_ok();

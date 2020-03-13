@@ -26,27 +26,57 @@
 
 #include "posix.hpp"
 #include "windows.hpp"
-#include <cstdio>
+#include <cctype>
+#include <cstdint>
+#include <fmt/format.h>
 
 
-class mmap_view {
-private:
-	MMAP_VIEW_PLATFORM_DATA
-	std::size_t file_size{};
-	void * file_view{};
+struct maybe_printable_byte {
+	char data;
+};
 
-public:
-	mmap_view(const char * fname, FILE* log);
-	mmap_view(const mmap_view &) = delete;
-	~mmap_view();
+template <>
+struct fmt::formatter<maybe_printable_byte> {
+	constexpr auto parse(format_parse_context & ctx) {
+		auto it = ctx.begin();
+		if(it != ctx.end() && *it != '}')
+			throw fmt::format_error("invalid format");
+		return it;
+	}
 
-	const void * data() const noexcept;
-	std::size_t size() const noexcept;
+	template <typename FormatContext>
+	auto format(maybe_printable_byte self, FormatContext & ctx) {
+		if(std::isprint(self.data))
+			return format_to(ctx.out(), "'{}'", self.data);
+		else
+			return format_to(ctx.out(), "{:#02x}", static_cast<std::uint8_t>(self.data));
+	}
+};
 
-	operator bool() const noexcept;
 
-	template <class T>
-	operator std::basic_string_view<T>() const noexcept {
-		return {static_cast<const T *>(data()), size()};
+struct error_write {
+	SYSTEM_ERROR_TYPE error;
+};
+
+namespace detail {
+	struct error_write_data {
+		SYSTEM_ERROR_DATA_FIELDS
+		error_write_data(SYSTEM_ERROR_TYPE error);
+	};
+}
+
+template <>
+struct fmt::formatter<error_write> {
+	constexpr auto parse(format_parse_context & ctx) {
+		auto it = ctx.begin();
+		if(it != ctx.end() && *it != '}')
+			throw fmt::format_error("invalid format");
+		return it;
+	}
+
+	template <typename FormatContext>
+	auto format(error_write error, FormatContext & ctx) {
+		detail::error_write_data data{error.error};
+		return format_to(ctx.out(), "{}", data.buf);
 	}
 };

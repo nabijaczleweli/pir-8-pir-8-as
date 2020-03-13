@@ -24,7 +24,11 @@
 #ifndef _WIN32
 
 
+#include <cstdio>
+
+
 #define SYSTEM_ERROR_TYPE int
+#define SYSTEM_ERROR_DATA_FIELDS char buf[BUFSIZ]{};
 
 
 #endif

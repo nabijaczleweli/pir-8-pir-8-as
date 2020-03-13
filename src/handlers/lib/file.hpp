@@ -26,6 +26,7 @@
 
 #include <cstdint>
 #include <cstdio>
+#include <fmt/format.h>
 
 
 enum class file_mode : std::uint8_t {
@@ -37,6 +38,29 @@ enum class file_mode : std::uint8_t {
 file_mode operator&(file_mode lhs, file_mode rhs) noexcept;
 file_mode operator|(file_mode lhs, file_mode rhs) noexcept;
 
+namespace detail {
+	struct file_mode_buf {
+		char buf[4];
+		file_mode_buf(file_mode mode) noexcept;
+	};
+}
+
+template <>
+struct fmt::formatter<file_mode> {
+	constexpr auto parse(format_parse_context & ctx) {
+		auto it = ctx.begin();
+		if(it != ctx.end() && *it != '}')
+			throw fmt::format_error("invalid format");
+		return it;
+	}
+
+	template <typename FormatContext>
+	auto format(file_mode mode, FormatContext & ctx) {
+		const detail::file_mode_buf mode_buf{mode};
+		return format_to(ctx.out(), "{}", mode_buf.buf);
+	}
+};
+
 
 class file {
 private:
@@ -45,6 +69,7 @@ private:
 public:
 	file(const char * fname, file_mode mode, bool buffer = true);
 	file(const file &) = delete;
+	file(file &&);
 	~file();
 
 	operator const std::FILE *() const noexcept;

@@ -21,18 +21,23 @@
 // DEALINGS IN THE SOFTWARE.
 
 
+#include "assert.hpp"
+#include "lib/file.hpp"
 #include "lib/io.hpp"
 #include "lib/mmap/mmap_view.hpp"
-#include "assert.hpp"
-#include <iostream>
+#include <cstdio>
 
 
 int main() {
-	mmap_view readme("README.md", std::cerr);
+	mmap_view readme("README.md", stderr);
 	assert(readme, "Couldn't map file");
 
-	assert_eq_print(load_configured_io(readme, "README.md", std::cerr), io_config{}, "Somehow not empty",
-	                [](const auto & what, auto & out) { out << '{' << what.size() << " members}"; });
+	assert_eq_print(load_configured_io(readme, "README.md", stderr), io_config{}, "Somehow not empty", [](const auto & what) {
+		std::string ret;
+		for(auto && kv : what)
+			ret += fmt::format("{{{}, {{{}, {}}}}}; ", kv.first, kv.second.first, kv.second.second);
+		return ret;
+	});
 
 	test_ok();
 }

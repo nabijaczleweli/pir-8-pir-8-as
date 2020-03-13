@@ -21,38 +21,40 @@
 // DEALINGS IN THE SOFTWARE.
 
 
-#include "lib/display.hpp"
+#include "lib/display/display.hpp"
+#include "lib/file.hpp"
 #include "lib/io.hpp"
 #include "lib/mmap/mmap_view.hpp"
-#include <fstream>
+#include <fmt/format.h>
 #include <pir-8-emu/port_handler.h>
 
 
 struct bulk_io_state {
 	io_mapping io_map;
-	std::ofstream log;
+	file log;
 };
 
-static std::ofstream init_log(const char * func) {
-	std::ofstream log;
-	log.rdbuf()->pubsetbuf(nullptr, 0);
-	log.open("bulk_io.log", std::ios::app);
-	log << '\n' << func << "()\n";
+static file init_log(const char * func) {
+	file log{"bulk_io.log", file_mode::append, false};
+	fmt::print(log,
+	           "\n"
+	           "{}()\n",
+	           func);
 	return log;
 }
 
-static io_config read_io_config(const mmap_view & input_file, std::ostream & log) {
+static io_config read_io_config(const mmap_view & input_file, std::FILE * log) {
 	if(!input_file) {
-		log << "Couldn't map bulk.io.\n";
+		fmt::print(log, "Couldn't map bulk.io.\n");
 		return {};
 	}
-	log << "Mapped bulk.io (" << input_file.size() << "B)!\n\n";
+	fmt::print(log, "Mapped bulk.io ({}B)!\n\n", input_file.size());
 
 	const auto config = load_configured_io(input_file, "bulk.io", log);
-	log << config.size() << " files configured: ";
+	fmt::print(log, "{} files configured: ", input_file.size());
 	for(auto && spec : config)
-		log << spec.second.second << "; ";
-	log << "\n";
+		fmt::print(log, "{}; ", spec.second.second);
+	fmt::print(log, "\n");
 
 	return config;
 }
@@ -71,7 +73,7 @@ void * pir_8_emu_init(const unsigned char *, unsigned char) {
 		const auto config = read_io_config(input_file, log);
 
 		auto map = open_configured_io(config, log);
-		log << map.size() << " files opened – " << ((map.size() == config.size()) ? "all good" : "some are missing") << "!\n\n";
+		fmt::print(log, "{} files opened – {}!\n\n", map.size(), (map.size() == config.size()) ? "all good" : "some are missing");
 		return map;
 	}();
 
@@ -80,46 +82,46 @@ void * pir_8_emu_init(const unsigned char *, unsigned char) {
 
 void pir_8_emu_uninit(void * state_v) {
 	auto state = static_cast<bulk_io_state *>(state_v);
-	state->log << "pir_8_emu_uninit()\n\n";
+	fmt::print(state->log, "pir_8_emu_uninit()\n\n");
 
 	delete state;
 }
 
 unsigned char pir_8_emu_handle_read(void * state_p, unsigned char port) {
 	auto & state = *static_cast<bulk_io_state *>(state_p);
-	state.log << "pir_8_emu_handle_read(" << byte_write{port} << "): ";
+	fmt::print(state.log, "pir_8_emu_handle_read({:#02x}): ", port);
 
 	if(auto stream = state.io_map.find(port); stream != state.io_map.end()) {
-		char data{};
-		stream->second.get(data);
+		const auto raw_data = fgetc(stream->second);
+		const char data = raw_data == EOF ? 0x00 : raw_data;
 
-		if(stream->second.eof())
-			state.log << "EOF";
-		else if(stream->second.fail())
-			state.log << "failed";
+		if(std::feof(stream->second))
+			fmt::print(state.log, "EOF");
+		if(std::ferror(stream->second))
+			fmt::print(state.log, "error");
 		else
-			state.log << "got " << maybe_printable_write{data};
-		state.log << "\n\n";
+			fmt::print(state.log, "got {}", maybe_printable_byte{data});
+		fmt::print(state.log, "\n\n");
 
 		return data;
 	} else {
-		state.log << "not found\n\n";
+		fmt::print(state.log, "not found\n\n");
 		return 0x00;
 	}
 }
 
 void pir_8_emu_handle_write(void * state_p, unsigned char port, unsigned char byte) {
 	auto & state = *static_cast<bulk_io_state *>(state_p);
-	state.log << "pir_8_emu_handle_write(" << byte_write{port} << ", " << maybe_printable_write{static_cast<char>(byte)} << "): ";
+	fmt::print(state.log, "pir_8_emu_handle_write({:#02x}, {}): ", port, maybe_printable_byte{static_cast<char>(byte)});
 
 	if(auto stream = state.io_map.find(port); stream != state.io_map.end()) {
-		stream->second.put(byte);
+		std::fputc(byte, stream->second);
 
-		if(stream->second.bad())
-			state.log << "failed";
+		if(std::ferror(stream->second))
+			fmt::print(state.log, "error");
 		else
-			state.log << "ok";
-		state.log << "\n\n";
+			fmt::print(state.log, "ok");
+		fmt::print(state.log, "\n\n");
 	} else
-		state.log << "not found\n\n";
+		fmt::print(state.log, "not found\n\n");
 }
