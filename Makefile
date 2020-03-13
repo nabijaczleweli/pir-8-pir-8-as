@@ -28,7 +28,7 @@ INCAR := $(foreach l,pir-8-emu fmt,-isystem$(EXTDIR)$(l)/include)
 HANDLER_SOURCES := $(sort $(wildcard $(HNDDIR)*.cpp))
 HANDLER_LIB_SOURCES := $(sort $(wildcard $(HNDDIR)**/*.cpp $(HNDDIR)**/**/*.cpp))
 TEST_SOURCES := $(sort $(wildcard $(TSTDIR)*.cpp $(TSTDIR)**/*.cpp $(TSTDIR)**/**/*.cpp))
-ASSEMBLY_SOURCES := $(sort $(wildcard $(ASMDIR)*.p8a.pp))
+ASSEMBLIES := $(patsubst $(ASMDIR)%.p8a,%,$(sort $(wildcard $(ASMDIR)*.p8a)))
 FMT_SOURCES := $(sort $(wildcard $(EXTDIR)fmt/src/*.cc))
 
 
@@ -43,7 +43,7 @@ clean :
 
 handlers : $(foreach l,$(HANDLER_SOURCES),$(patsubst $(HNDDIR)%.cpp,$(OUTDIR)$(PREDLL)%$(DLL),$(l)))
 
-assemblies : $(foreach l,$(ASSEMBLY_SOURCES),$(patsubst $(ASMDIR)%.p8a.pp,$(OUTDIR)%$(PIR_8_EXE),$(l)))
+assemblies : $(foreach l,$(ASSEMBLIES),$(patsubst %,$(OUTDIR)%$(PIR_8_EXE),$(l)))
 
 tests : $(foreach l,$(TEST_SOURCES),$(patsubst %.cpp,$(OUTDIR)%$(EXE),$(l)))
 	$(foreach l,$^,$l &&) :
@@ -56,6 +56,15 @@ $(BLDDIR)libhandler$(ARCH) : $(patsubst $(SRCDIR)%.cpp,$(OBJDIR)%$(OBJ),$(HANDLE
 $(BLDDIR)libfmt$(ARCH) : $(patsubst $(EXTDIR)%.cc,$(OBJDIR)ext/%$(OBJ),$(FMT_SOURCES))
 	@mkdir -p $(dir $@)
 	$(AR) crs $@ $^
+
+
+# This is ugly, but I couldn't get Make to pass % to $(wildcard) or $(call)
+define ASSEMBLY_TEMPLATE =
+$(OUTDIR)$(1)$(PIR_8_EXE) : $(ASMDIR)$(1).p8a $(sort $(wildcard $(ASMDIR)$(1)/*.p8a $(ASMDIR)$(1)/**/*.p8a $(ASMDIR)$(1)/**/**/*.p8a))
+	@mkdir -p $$(dir $$@)
+	$(PIR_8_AS) -o$$@ $$^
+endef
+$(foreach l,$(ASSEMBLIES),$(eval $(call ASSEMBLY_TEMPLATE,$(l))))
 
 
 $(OUTDIR)$(PREDLL)%$(DLL) : $(OBJDIR)%$(OBJ) $(foreach l,fmt handler,$(BLDDIR)lib$(l)$(ARCH))
@@ -81,10 +90,6 @@ $(OBJDIR)ext/%$(OBJ) : $(EXTDIR)%.cc
 $(BLDDIR)% : $(ASMDIR)%.pp
 	@mkdir -p $(dir $@)
 	$(CPP) $(notdir $(1)) -nostdinc -I$(abspath $(BLDDIR)highlit) -CC -P -o$@ $^
-
-$(OUTDIR)%$(PIR_8_EXE) : $(BLDDIR)%.p8a
-	@mkdir -p $(dir $@)
-	$(PIR_8_AS) -o$@ $^
 
 $(OUTDIR)%$(EXE) : $(OBJDIR)%$(OBJ) $(foreach l,fmt handler,$(BLDDIR)lib$(l)$(ARCH))
 	@mkdir -p $(dir $@)

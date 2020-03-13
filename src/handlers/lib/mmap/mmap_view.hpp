@@ -37,7 +37,7 @@ private:
 	void * file_view{};
 
 public:
-	mmap_view(const char * fname, FILE * log);
+	mmap_view(const char * fname, std::FILE * log);
 	mmap_view(const mmap_view &) = delete;
 	~mmap_view();
 

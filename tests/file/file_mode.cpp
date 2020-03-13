@@ -25,16 +25,6 @@
 #include "lib/file.hpp"
 
 
-// enum class file_mode : std::uint8_t {
-	// read   = 0b001,
-	// write  = 0b010,
-	// append = 0b100,
-// };
-	// buf[0] = rw ? 'a' : mode_c;
-	// buf[1] = 'b';
-	// buf[2] = rw ? '+' : '\0';
-	// buf[3] = '\0';
-
 int main() {
 	assert_eq(fmt::format("{}", file_mode::read), "rb", "Mismatch");
 	assert_eq(fmt::format("{}", file_mode::write), "wb", "Mismatch");

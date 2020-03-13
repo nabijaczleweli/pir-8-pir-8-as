@@ -1,0 +1,7 @@
+:label save main
+LOAD IMM BYTE A
+1
+LOAD IMM BYTE B
+0x69
+PORT OUT B
+HALT
